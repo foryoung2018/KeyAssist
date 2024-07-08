@@ -5,14 +5,93 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+
+
     <Button
         android:id="@+id/btswip"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="30dp"
         android:layout_marginTop="30dp"
-        android:text="滑动"
         android:onClick="swipe"
+        android:text="滑动"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/btclick_left"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="130dp"
+        android:layout_marginTop="30dp"
+        android:text="方向左"
+        android:onClick="leftclick"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btswip" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="王者荣耀"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/btclick_right"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="30dp"
+        android:text="方向右"
+        android:onClick="rightclick"
+        app:layout_constraintBottom_toBottomOf="@+id/btclick_left"
+        app:layout_constraintStart_toEndOf="@+id/btclick_left"
+        app:layout_constraintTop_toTopOf="@+id/btclick_left" />
+
+    <Button
+        android:id="@+id/btclick_double_swipe"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="30dp"
+        android:text="双指滑动"
+        android:onClick="doubleswipe"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btswip" />
+
+    <Button
+        android:id="@+id/btclick_top"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="30dp"
+        android:text="单指点击"
+        android:onClick="tapclick"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btclick_double_swipe" />
+
+    <Button
+        android:id="@+id/btclick_down"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:text="方向下"
+        android:onClick="swipeDown"
+        app:layout_constraintEnd_toEndOf="@+id/btclick_right"
+        app:layout_constraintStart_toStartOf="@+id/btclick_left"
+        app:layout_constraintTop_toBottomOf="@+id/btclick_right" />
+
+    <Button
+        android:id="@+id/btclick_floatservice"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="30dp"
+        android:text="启动悬浮窗"
+        android:onClick="startFloat"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btclick_top" />
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>
