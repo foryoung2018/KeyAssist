@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".fragment.AddEventFragment">
+<!--        <Button-->
+<!--            android:id="@+id/tapclick"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginStart="30dp"-->
+<!--            android:layout_marginTop="30dp"-->
+<!--            android:text="@string/tapclick"-->
+<!--            android:onClick="tapclick" />-->
+
+<!--        <Button-->
+<!--            android:id="@+id/doubleclick"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginStart="30dp"-->
+<!--            android:layout_marginTop="30dp"-->
+<!--            android:text="@string/doubleclick"-->
+<!--            android:onClick="doubleclick" />-->
+<!--        -->
+<!--        <Button-->
+<!--            android:id="@+id/swipe"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginStart="30dp"-->
+<!--            android:layout_marginTop="30dp"-->
+<!--            android:text="@string/swipe"-->
+<!--            android:onClick="swipe" />-->
+<!--        -->
+<!--        <Button-->
+<!--            android:id="@+id/listKeyMapping"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginStart="30dp"-->
+<!--            android:layout_marginTop="30dp"-->
+<!--            android:text="查看所有按键映射"-->
+<!--            android:onClick="listKeyMapping" />-->
+
+<!--        <Button-->
+<!--            android:id="@+id/btswip"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginStart="30dp"-->
+<!--            android:layout_marginTop="30dp"-->
+<!--            android:onClick="swipe"-->
+<!--            android:text="滑动" />-->
+
+<!--        <Button-->
+<!--            android:id="@+id/btclick_left"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginStart="130dp"-->
+<!--            android:layout_marginTop="30dp"-->
+<!--            android:text="方向左"-->
+<!--            android:onClick="leftclick" />-->
+
+<!--        <TextView-->
+<!--            android:id="@+id/textView"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:text="王者荣耀" />-->
+
+<!--        <Button-->
+<!--            android:id="@+id/btclick_right"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginStart="30dp"-->
+<!--            android:text="方向右"-->
+<!--            android:onClick="rightclick" />-->
+
+<!--        <Button-->
+<!--            android:id="@+id/btclick_double_swipe"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginStart="30dp"-->
+<!--            android:layout_marginTop="30dp"-->
+<!--            android:text="双指滑动"-->
+<!--            android:onClick="doubleswipe" />-->
+
+
+
+<!--        <Button-->
+<!--            android:id="@+id/btclick_down"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginTop="30dp"-->
+<!--            android:text="方向下"-->
+<!--            android:onClick="swipeDown" />-->
+
+<!--        <Button-->
+<!--            android:id="@+id/btclick_floatservice"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginStart="30dp"-->
+<!--            android:layout_marginTop="30dp"-->
+<!--            android:text="启动悬浮窗"-->
+<!--            android:onClick="startFloat" />-->
+
+        <TextView
+            android:layout_marginTop="10px"
+            android:textColor="#000000"
+            android:textSize="20px"
+            android:textStyle="bold"
+            android:gravity="center_horizontal"
+            android:text="增加点击事件"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:layout_marginTop="25px"
+            android:id="@+id/recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+
+</FrameLayout>
