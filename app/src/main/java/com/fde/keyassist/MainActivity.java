@@ -64,14 +64,13 @@ public class MainActivity extends Activity {
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         Log.d(TAG, "onKeyUp: keyCode:" + keyCode + ", event:" + event + "");
-        return super.onKeyDown(keyCode, event);
+        return super.onKeyUp(keyCode, event);
     }
 
     @Override
     public boolean onGenericMotionEvent(MotionEvent event) {
         Log.d(TAG, "onGenericMotionEvent: event:" + event + "");
-        return true;
-//        return super.onGenericMotionEvent(event);
+        return super.onGenericMotionEvent(event);
     }
 
     @Override
@@ -80,8 +79,13 @@ public class MainActivity extends Activity {
             leftclick(null);
         } else if(keyCode == KeyEvent.KEYCODE_D) {
             rightclick(null);
+        } else if(keyCode == KeyEvent.KEYCODE_F) {
+            try {
+                swipe(null);
+            } catch (Exception e){
+                e.printStackTrace();
+            }
         }
-        Log.d(TAG, "onKeyDown: keyCode:" + keyCode + ", event:" + event + "");
         return super.onKeyDown(keyCode, event);
     }
 
@@ -102,15 +106,22 @@ public class MainActivity extends Activity {
     }
 
     public void swipe(View view) {
-        final float x1 = 100f;
-        final float y1 = 100f;
-        final float x2 = 200f;
-        final float y2 = 200f;
-        int duration = 1000;
+//        final float x1 = 100f;
+//        final float y1 = 100f;
+//        final float x2 = 200f;
+//        final float y2 = 200f;
+//        int duration = 1000;
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                swipeLine(x1, y1, x2, y2, duration, InputDevice.SOURCE_MOUSE);
+//            }
+//        }).start();
+
         new Thread(new Runnable() {
             @Override
             public void run() {
-                swipeLine(x1, y1, x2, y2, duration, InputDevice.SOURCE_MOUSE);
+                MultiTouchSimulator.simulateSingleFingerTouch(instrumentation);
             }
         }).start();
     }
