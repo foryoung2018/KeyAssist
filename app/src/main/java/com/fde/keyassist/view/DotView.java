@@ -49,12 +49,7 @@ public class DotView extends View {
         // 绘制圆点
         // 这里假设我们想在视图的中心绘制一个半径为50dp的圆点
         // 注意：由于我们使用的是dp单位，所以需要将其转换为px
-        float radius = dpToPx(10);
-        canvas.drawCircle(1069f, 271f, radius, paint);
-    }
-
-    // dp转px
-    private float dpToPx(float dp) {
-        return dp * (getResources().getDisplayMetrics().densityDpi / 160f);
+        float radius = 10;
+        canvas.drawCircle(this.centerX, this.centerY, radius, paint);
     }
 }

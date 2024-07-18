@@ -61,6 +61,8 @@ public class MainActivity extends Activity implements View.OnClickListener{
         userProfileImage.setOnClickListener(this);
         addEventImage.setOnClickListener(this);
         replace(new ConfigManageFragment());
+        Intent intent = new Intent(this, FloatingService.class);
+        startService(intent);
     }
 
     public void replace(Fragment fragment){
@@ -92,36 +94,37 @@ public class MainActivity extends Activity implements View.OnClickListener{
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        Integer eventType = mappingEventType.getEventType(keyCode);
-        if(eventType == Constant.TAP_CLICK_EVENT){
-            TapClickKeyMappingController controller = new TapClickKeyMappingController(this);
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    controller.executeEvent(keyCode);
-                }
-            }).start();
-
-        } else if (eventType == Constant.DOUBLE_CLICK_EVENT) {
-            DoubleClickKeyMappingController controller = new DoubleClickKeyMappingController(this);
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    controller.executeEvent(keyCode);
-                }
-            }).start();
-
-        }else if(eventType == Constant.SWIPE){
-            SwipeKeyMappingController controller = new SwipeKeyMappingController(this);
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    controller.executeEvent(keyCode);
-                }
-            }).start();
-
-        }
-        return super.onKeyDown(keyCode, event);
+//        Integer eventType = mappingEventType.getEventType(keyCode);
+//        if(eventType == Constant.TAP_CLICK_EVENT){
+//            TapClickKeyMappingController controller = new TapClickKeyMappingController(this);
+//            new Thread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    controller.executeEvent(keyCode);
+//                }
+//            }).start();
+//
+//        } else if (eventType == Constant.DOUBLE_CLICK_EVENT) {
+//            DoubleClickKeyMappingController controller = new DoubleClickKeyMappingController(this);
+//            new Thread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    controller.executeEvent(keyCode);
+//                }
+//            }).start();
+//
+//        }else if(eventType == Constant.SWIPE){
+//            SwipeKeyMappingController controller = new SwipeKeyMappingController(this);
+//            new Thread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    controller.executeEvent(keyCode);
+//                }
+//            }).start();
+//
+//        }
+//        return super.onKeyDown(keyCode, event);
+        return false;
     }
 
     @Override

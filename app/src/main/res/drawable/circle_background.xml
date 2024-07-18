@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="#80123456"/> <!-- 设置为红色，你可以根据需要更改颜色 -->
+    <size
+        android:width="30dp"
+        android:height="30dp"/> <!-- 设置圆形的宽度和高度 -->
+</shape>

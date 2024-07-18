@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -17,6 +18,7 @@ import com.fde.keyassist.controller.SwipeKeyMappingController;
 import com.fde.keyassist.entity.SwipeKeyMapping;
 import com.fde.keyassist.event.MappingEventType;
 import com.fde.keyassist.util.Constant;
+import com.fde.keyassist.view.DotView;
 
 
 // 滑动dialog
@@ -37,6 +39,8 @@ public class SwipeDialog extends BaseServiceDialog implements View.OnClickListen
     private Button swipeBtCommit;
     private Button swipeBtCancel;
     private EditText dialogSwipDuration;
+    private FrameLayout dialogSwipeFrame;
+    private boolean isTouch = true;
 
     public SwipeDialog(@NonNull Context context, Integer eventType) {
         super(context);
@@ -55,6 +59,7 @@ public class SwipeDialog extends BaseServiceDialog implements View.OnClickListen
         swipeBtCommit.setOnClickListener(this);
         swipeBtCancel.setOnClickListener(this);
         dialogSwipDuration = findViewById(R.id.dialog_swip_duration);
+        dialogSwipeFrame = findViewById(R.id.dialog_swipe_frame);
     }
 
     @Override
@@ -82,30 +87,39 @@ public class SwipeDialog extends BaseServiceDialog implements View.OnClickListen
         if(event.getAction() == MotionEvent.ACTION_DOWN){
             return super.onTouchEvent(event);
         }
+        // 第一次按下
         if (event.getAction() == MotionEvent.ACTION_UP && flag) {
             tvHint1.setText("请点击屏幕确定结束位置");
             swipeKeyMapping.setStartX((int)event.getRawX());
             swipeKeyMapping.setStartY((int)event.getRawY());
             flag = false;
+            DotView dotView = new DotView(this.getContext(),swipeKeyMapping.getStartX(),swipeKeyMapping.getStartY());
+            dialogSwipeFrame.addView(dotView);
         }else{
+            // 第二次按下
             tvHint1.setText("请点击按键进行映射");
             swipeKeyMapping.setEndX((int)event.getRawX());
             swipeKeyMapping.setEndY((int)event.getRawY());
+            DotView dotView = new DotView(this.getContext(),swipeKeyMapping.getEndX(),swipeKeyMapping.getEndY());
+            dialogSwipeFrame.addView(dotView);
+            isTouch = false;
         }
         return super.onTouchEvent(event);
     }
 
     @Override
     public boolean onKeyDown(int keyCode, @NonNull KeyEvent event) {
-        swipeKeyMapping.setKeycode(keyCode);
-        dialogAddStartX.setText("x1坐标的值为："+swipeKeyMapping.getStartX());
-        dialogAddStartY.setText("y1坐标的值为："+swipeKeyMapping.getStartY());
-        dialogAddEndX.setText("x2坐标的值为："+swipeKeyMapping.getEndX());
-        dialogAddEndY.setText("y2坐标的值为："+swipeKeyMapping.getEndY());
-        dialogAddPointKeycode.setText("键值为："+swipeKeyMapping.getKeycode());
-        glInput.setVisibility(View.VISIBLE);
-        swipeBtCommit.setVisibility(View.VISIBLE);
-        swipeBtCancel.setVisibility(View.VISIBLE);
+        if (!isTouch) {
+            swipeKeyMapping.setKeycode(keyCode);
+            dialogAddStartX.setText("x1坐标的值为：" + swipeKeyMapping.getStartX());
+            dialogAddStartY.setText("y1坐标的值为：" + swipeKeyMapping.getStartY());
+            dialogAddEndX.setText("x2坐标的值为：" + swipeKeyMapping.getEndX());
+            dialogAddEndY.setText("y2坐标的值为：" + swipeKeyMapping.getEndY());
+            dialogAddPointKeycode.setText("键值为：" + swipeKeyMapping.getKeycode());
+            glInput.setVisibility(View.VISIBLE);
+            swipeBtCommit.setVisibility(View.VISIBLE);
+            swipeBtCancel.setVisibility(View.VISIBLE);
+        }
         return super.onKeyDown(keyCode, event);
     }
 

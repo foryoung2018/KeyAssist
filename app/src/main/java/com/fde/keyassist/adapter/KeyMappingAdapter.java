@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.fde.keyassist.R;
 import com.fde.keyassist.dialog.BaseServiceDialog;
 import com.fde.keyassist.dialog.ClickDialog;
+import com.fde.keyassist.dialog.DirectionKeyDialog;
 import com.fde.keyassist.dialog.SwipeDialog;
 import com.fde.keyassist.entity.KeyMapping;
 import com.fde.keyassist.util.Constant;
@@ -99,6 +100,14 @@ public class KeyMappingAdapter extends RecyclerView.Adapter<KeyMappingAdapter.Vi
 
             } else if (keyMapping.getEventType() == Constant.SWIPE) {
                 serviceDialog = new SwipeDialog(context, Constant.SWIPE);
+                serviceDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+                    }
+                });
+                serviceDialog.show();
+            } else if (keyMapping.getEventType() == Constant.DIRECTION_KEY){
+                serviceDialog = new DirectionKeyDialog(context, Constant.SWIPE);
                 serviceDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
                     public void onDismiss(DialogInterface dialog) {

@@ -13,12 +13,13 @@ import android.widget.LinearLayout;
 
 import com.fde.keyassist.R;
 import com.fde.keyassist.activity.AllConfigActivity;
-import com.fde.keyassist.controller.TapClickKeyMappingController;
+import com.fde.keyassist.activity.HonorOfKingsActivity;
 
 
 public class ConfigManageFragment extends Fragment implements View.OnClickListener{
 
     private LinearLayout configManageAllConfig;
+    private LinearLayout configManageWz;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -32,6 +33,8 @@ public class ConfigManageFragment extends Fragment implements View.OnClickListen
     public void init(View view){
         configManageAllConfig = view.findViewById(R.id.config_manage_all_config);
         configManageAllConfig.setOnClickListener(this);
+        configManageWz = view.findViewById(R.id.config_manage_wz);
+        configManageWz.setOnClickListener(this);
     }
 
 
@@ -43,6 +46,9 @@ public class ConfigManageFragment extends Fragment implements View.OnClickListen
                 Intent intent = new Intent(view.getContext(), AllConfigActivity.class);
                 startActivity(intent);
                 break;
+            case R.id.config_manage_wz:
+                Intent wz = new Intent(view.getContext(), HonorOfKingsActivity.class);
+                startActivity(wz);
         }
     }
 }

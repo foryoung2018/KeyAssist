@@ -1,24 +1,18 @@
 package com.fde.keyassist.dialog;
 
-import static android.content.Context.WINDOW_SERVICE;
-import static androidx.core.content.ContextCompat.getSystemService;
-
 import android.content.Context;
-import android.graphics.PixelFormat;
-import android.view.Gravity;
 import android.view.KeyEvent;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
 import com.fde.keyassist.R;
+import com.fde.keyassist.controller.DirectionKeyMappingController;
 import com.fde.keyassist.controller.DoubleClickKeyMappingController;
 import com.fde.keyassist.controller.TapClickKeyMappingController;
 import com.fde.keyassist.entity.TapClickKeyMapping;
@@ -27,7 +21,7 @@ import com.fde.keyassist.util.Constant;
 import com.fde.keyassist.view.DotView;
 
 
-public class ClickDialog extends BaseServiceDialog implements View.OnClickListener {
+public class DirectionKeyDialog extends BaseServiceDialog implements View.OnClickListener {
 
 
     private TextView tvHint;
@@ -37,8 +31,7 @@ public class ClickDialog extends BaseServiceDialog implements View.OnClickListen
     private int y;
     private int keyCode ;
     private TextView dialogAddPointKeycode;
-    private TapClickKeyMappingController tapClickKeyMappingController;
-    private DoubleClickKeyMappingController doubleClickKeyMappingController;
+    private DirectionKeyMappingController directionKeyMappingController;
     private MappingEventType mappingEventType;
     private Integer eventType;
     private boolean isTouchDisabled = false;
@@ -54,7 +47,7 @@ public class ClickDialog extends BaseServiceDialog implements View.OnClickListen
         return super.dispatchTouchEvent(ev);
     }
 
-    public ClickDialog(@NonNull Context context, Integer eventType) {
+    public DirectionKeyDialog(@NonNull Context context, Integer eventType) {
         super(context);
         this.eventType = eventType;
     }
@@ -76,8 +69,7 @@ public class ClickDialog extends BaseServiceDialog implements View.OnClickListen
 
     @Override
     protected void onInited() {
-        tapClickKeyMappingController = new TapClickKeyMappingController(this.getContext());
-        doubleClickKeyMappingController = new DoubleClickKeyMappingController(this.getContext());
+        directionKeyMappingController = new DirectionKeyMappingController(this.getContext());
         tvHint = findViewById(R.id.tv_hint);
         dialogAddPointX = findViewById(R.id.dialog_add_point_x);
         dialogAddPointY = findViewById(R.id.dialog_add_point_y);
@@ -97,8 +89,6 @@ public class ClickDialog extends BaseServiceDialog implements View.OnClickListen
             y = (int) event.getRawY();
             DotView dotView = new DotView(this.getContext(),x,y);
             layoutContent.addView(dotView);
-
-
             dialogAddPointX.setText("x的坐标值为：" + x);
             dialogAddPointY.setText("y的坐标值为：" + y);
             dialogAddPointX.setVisibility(View.VISIBLE);
@@ -125,14 +115,14 @@ public class ClickDialog extends BaseServiceDialog implements View.OnClickListen
         switch (v.getId()) {
             // 保存按键映射
             case R.id.bt_commit:
-                if(eventType == Constant.TAP_CLICK_EVENT){
-                    tapClickKeyMappingController.insert(new TapClickKeyMapping(x,y,keyCode));
-                    mappingEventType.save(keyCode, Constant.TAP_CLICK_EVENT);
-                }else if(eventType == Constant.DOUBLE_CLICK_EVENT){
-                    doubleClickKeyMappingController.insert(new TapClickKeyMapping(x,y,keyCode));
-                    mappingEventType.save(keyCode, Constant.DOUBLE_CLICK_EVENT);
-                }
-
+                directionKeyMappingController.insert(new TapClickKeyMapping(x,y,KeyEvent.KEYCODE_A));
+                directionKeyMappingController.insert(new TapClickKeyMapping(x,y,KeyEvent.KEYCODE_W));
+                directionKeyMappingController.insert(new TapClickKeyMapping(x,y,KeyEvent.KEYCODE_S));
+                directionKeyMappingController.insert(new TapClickKeyMapping(x,y,KeyEvent.KEYCODE_D));
+                mappingEventType.save(KeyEvent.KEYCODE_A, Constant.DIRECTION_KEY);
+                mappingEventType.save(KeyEvent.KEYCODE_W, Constant.DIRECTION_KEY);
+                mappingEventType.save(KeyEvent.KEYCODE_S, Constant.DIRECTION_KEY);
+                mappingEventType.save(KeyEvent.KEYCODE_D, Constant.DIRECTION_KEY);
                 dismiss();
                 break;
             case R.id.bt_cancel:

@@ -6,10 +6,12 @@
     android:sharedUserMaxSdkVersion="32"
     tools:targetApi="tiramisu">
 
-    <uses-permission android:name="android.permission.INJECT_EVENTS"
-        android:protectionLevel="signature"/>
+    <uses-permission
+        android:name="android.permission.INJECT_EVENTS"
+        android:protectionLevel="signature" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <uses-permission android:name="android.permission.SYSTEM_OVERLAY_WINDOW"/>
+    <uses-permission android:name="android.permission.SYSTEM_OVERLAY_WINDOW" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -19,13 +21,15 @@
         android:theme="@style/Theme.KeyAssist"
         tools:targetApi="31">
         <activity
+            android:name=".activity.HonorOfKingsActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.KeyAssist"></activity>
+        <activity
             android:name=".activity.AllConfigActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/Theme.KeyAssist">
-        </activity>
-
-
+            android:theme="@style/Theme.KeyAssist"></activity>
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -33,15 +37,15 @@
             android:theme="@style/Theme.KeyAssist">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-
-        <service android:name=".FloatingService"
-            android:exported="true"
-            android:enabled="true"/>
-
+        <service
+            android:name=".FloatingService"
+            android:enabled="true"
+            android:exported="true" />
     </application>
 
 </manifest>

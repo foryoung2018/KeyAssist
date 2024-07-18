@@ -51,6 +51,7 @@ public class AddEventFragment extends Fragment {
         keyMappings.add(new KeyMapping(R.drawable.tap_click,"单击","模拟手指单击", Constant.TAP_CLICK_EVENT));
         keyMappings.add(new KeyMapping(R.drawable.double_click,"双击","模拟手指双击",Constant.DOUBLE_CLICK_EVENT));
         keyMappings.add(new KeyMapping(R.drawable.swipe,"滑动","模拟手指滑动",Constant.SWIPE));
+        keyMappings.add(new KeyMapping(R.drawable.direction_key,"方向键","模拟游戏方向按键",Constant.DIRECTION_KEY));
     }
 
 }
