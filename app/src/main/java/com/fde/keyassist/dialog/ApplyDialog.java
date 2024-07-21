@@ -1,0 +1,110 @@
+package com.fde.keyassist.dialog;
+
+import static android.content.Context.WINDOW_SERVICE;
+
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.graphics.PixelFormat;
+import android.os.Build;
+import android.util.DisplayMetrics;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+
+import com.fde.keyassist.R;
+import com.fde.keyassist.entity.KeyMappingEntity;
+import com.fde.keyassist.util.Constant;
+
+import org.litepal.LitePal;
+
+import java.util.ArrayList;
+import java.util.List;
+
+
+public class ApplyDialog {
+
+    private String planName;
+    private WindowManager windowManager;
+    private android.view.WindowManager.LayoutParams params;
+    private Context context;
+    private List<View> allView = new ArrayList<>();
+
+    public ApplyDialog(String planName,Context context){
+        this.planName = planName;
+        this.context = context;
+        init();
+    }
+
+    public void init(){
+        windowManager = createWindow();
+        params = createLayoutParams();
+    }
+
+    // 创建窗口
+    public android.view.WindowManager createWindow(){
+        android.view.WindowManager windowManager = (android.view.WindowManager) context.getSystemService(WINDOW_SERVICE);
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        windowManager.getDefaultDisplay().getMetrics(displayMetrics);
+        return windowManager;
+    }
+
+    // 创建窗口参数
+    public WindowManager.LayoutParams createLayoutParams(){
+        android.view.WindowManager.LayoutParams params = new android.view.WindowManager.LayoutParams();
+        params.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                | android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+                | android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                | android.view.WindowManager.LayoutParams.FLAG_SCALED
+                | android.view.WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR
+                | android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
+        if (Build.VERSION.SDK_INT >= 26) {
+            params.type = android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        } else {
+            params.type = android.view.WindowManager.LayoutParams.TYPE_SYSTEM_ALERT;
+        }
+        params.format = PixelFormat.TRANSLUCENT;
+        params.type = android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        params.gravity = Gravity.TOP | Gravity.START;
+        params.width = 70;
+        params.height = 70;
+        return params;
+    }
+    @SuppressLint("MissingInflatedId")
+    public List<KeyMappingEntity> apply(){
+        cancal();
+        List<KeyMappingEntity> curKeyMappingEntity = LitePal.where("planName = ?", planName).find(KeyMappingEntity.class);
+        for (KeyMappingEntity entity : curKeyMappingEntity){
+            if(entity.getEventType() == Constant.TAP_CLICK_EVENT) {
+                View view = LayoutInflater.from(context).inflate(R.layout.apply_dialog_tap_click, null, false);
+                params.x = entity.getX() - params.width/2;
+                params.y = entity.getY() - params.height/2;
+                if(entity.getKeyValue() != null && !entity.getKeyValue().isEmpty()){
+                    TextView apply_dialog_tap_click_edit = view.findViewById(R.id.apply_dialog_tap_click_edit);
+                    apply_dialog_tap_click_edit.setText(entity.getKeyValue());
+                }
+                windowManager.addView(view,params);
+                allView.add(view);
+            }
+
+        }
+        return curKeyMappingEntity;
+    }
+
+    public void cancal(){
+        if(windowManager!=null && allView!=null && !allView.isEmpty()){
+            for(View view: allView){
+                windowManager.removeView(view);
+            }
+            allView.clear();
+        }
+
+
+
+    }
+
+}

@@ -1,400 +1,350 @@
 package com.fde.keyassist;
 
-import static android.view.KeyEvent.ACTION_DOWN;
+
 
 import android.annotation.SuppressLint;
 import android.app.Service;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.IBinder;
-import android.os.SystemClock;
-import android.util.Log;
+import android.util.DisplayMetrics;
 import android.view.Gravity;
-import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.TextView;
+import android.widget.Spinner;
 
 import androidx.annotation.Nullable;
 
-import com.fde.keyassist.controller.DirectionKeyMappingController;
-import com.fde.keyassist.controller.DoubleClickKeyMappingController;
-import com.fde.keyassist.controller.SwipeKeyMappingController;
-import com.fde.keyassist.controller.TapClickKeyMappingController;
-import com.fde.keyassist.event.DirectionClickEvent;
-import com.fde.keyassist.event.MappingEventType;
-import com.fde.keyassist.event.TapClickEvent;
+import com.fde.keyassist.adapter.PlaySpinnerAdapter;
+import com.fde.keyassist.dialog.ApplyDialog;
+import com.fde.keyassist.dialog.ModifyDialog;
+import com.fde.keyassist.entity.KeyMappingEntity;
+import com.fde.keyassist.event.EventUtils;
 import com.fde.keyassist.util.Constant;
 
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
-public class FloatingService extends Service {
 
-    private static final String TAG = "FloatingService";
-    private View mFloatingView;
-    private WindowManager.LayoutParams floatLayoutParams;
-    private WindowManager mWindowManager;
-    private MappingEventType mappingEventType;
-    Thread direction = new Thread();
-    private TapClickKeyMappingController tapClickKeyMappingController;
+public class FloatingService extends Service implements View.OnClickListener{
+
+    private boolean isMainWindow = false; // 是否显示了主界面
+    private View mainView;
+    private WindowManager.LayoutParams mainParams;
+    private WindowManager mainWindow;
+    private boolean isChange = false; // 是否正在修改
+    private ModifyDialog modifyDialog;
+    private Spinner key_mapping_spinner;
+    private Button key_mapping_save;
+    private Button key_mapping_cancel;
+    private ImageView key_mapping_tap_click;
+
+    private ApplyDialog applyDialog;
+    private Button key_mapping_apply;
+    private Boolean isApply = false;
+
+    private Boolean editAndCancal = true;
+
+    private List<KeyMappingEntity> keyMappingEntities;
+
+    private View floatView;
+
+    private WindowManager.LayoutParams floatParams;
+
+    private WindowManager floatWindow;
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return null;
     }
 
+
+
     @Override
     public void onCreate() {
         super.onCreate();
         showFloatView();
-        mappingEventType = new MappingEventType(getApplicationContext());
-        tapClickKeyMappingController = new TapClickKeyMappingController(this);
+        applyDialog = new ApplyDialog("方案一",this);
     }
-//
+
+
+
+
+    @SuppressLint("ClickableViewAccessibility")
     private void showFloatView() {
-        mFloatingView = LayoutInflater.from(this).inflate(R.layout.layout_window, null);
-        //设置WindowManger布局参数以及相关属性
-        floatLayoutParams = new WindowManager.LayoutParams();
-        floatLayoutParams.flags =
-                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL |
-                        WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE |
-//                        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
-                        WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR |
-                        WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
-        ;
-        if (Build.VERSION.SDK_INT >= 26) {
-            floatLayoutParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
-        } else {
-            floatLayoutParams.type = WindowManager.LayoutParams.TYPE_SYSTEM_ALERT;
-        }
-        floatLayoutParams.width = 50;
-        floatLayoutParams.height = 50;
-        floatLayoutParams.format = PixelFormat.TRANSLUCENT;
-        //初始化位置
-        floatLayoutParams.gravity = Gravity.RIGHT | Gravity.BOTTOM;
-        //获取WindowManager对象
-        mWindowManager = (WindowManager) this.getSystemService(WINDOW_SERVICE);
-        mWindowManager.addView(mFloatingView, floatLayoutParams);
-        mFloatingView.setClickable(true);
-        mFloatingView.setFocusableInTouchMode(true);
-        mFloatingView.setOnKeyListener(new View.OnKeyListener() {
+        floatView = LayoutInflater.from(this).inflate(R.layout.background_window,null,false);
+        floatParams = createLayoutParams();
+        floatWindow = createWindow(50, 50, floatView, floatParams);
+        dragView(floatView,floatWindow,floatParams,"showKeyMapping");
+        onkey();
+
+    }
+
+    public void startListenerKey(){
+        floatParams.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+//                | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                | WindowManager.LayoutParams.FLAG_SCALED
+                | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR
+                | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
+        floatWindow.updateViewLayout(floatView,floatParams);
+    }
+    public void endListenerKey(){
+        floatParams.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+                | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                | WindowManager.LayoutParams.FLAG_SCALED
+                | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR
+                | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
+        floatWindow.updateViewLayout(floatView,floatParams);
+    }
+
+
+
+    public void onkey(){
+        floatView.setFocusableInTouchMode(true);
+        // 按键事件
+        floatView.setOnKeyListener(new View.OnKeyListener() {
             @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-//                Log.d(TAG, "onKey: " +", keyCode:" + keyCode + ", event:" + event + "");
-//                if(keyCode == KeyEvent.KEYCODE_A ||
-//                        keyCode == KeyEvent.KEYCODE_D ||
-//                        keyCode == KeyEvent.KEYCODE_S ||
-//                        keyCode == KeyEvent.KEYCODE_W
-//                ) {
-//                    mFloatingView.post(()-> DirectionController.getInstance().process(keyCode, event));
-//                } else {
-//                    if(event.getAction() == ACTION_DOWN){
-//                        switch (keyCode){
-//                            case KeyEvent.KEYCODE_K:
-//                                final float x = 1120f;
-//                                final float y = 720f;
-//                                final long now = SystemClock.uptimeMillis();
-//                                EventUtils.injectMotionEvent_1(InputDevice.SOURCE_TOUCHSCREEN, MotionEvent.ACTION_DOWN, now, now, x, y, 1.0f,
-//                                        0);
-//                                EventUtils.injectMotionEvent_1(InputDevice.SOURCE_TOUCHSCREEN, MotionEvent.ACTION_UP, now, now, x, y, 0.0f, 0);
-//                                break;
-//
-//                            default:
-//                                break;
-//                        }
-//                    }
-//                }
-//                return false;
-                Integer eventType = mappingEventType.getEventType(keyCode);
-                if(eventType == Constant.TAP_CLICK_EVENT){
-                    TapClickKeyMappingController controller = new TapClickKeyMappingController(getApplicationContext());
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            controller.executeEvent(keyCode);
-                        }
-                    }).start();
-
-                } else if (eventType == Constant.DOUBLE_CLICK_EVENT) {
-                    DoubleClickKeyMappingController controller = new DoubleClickKeyMappingController(getApplicationContext());
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            controller.executeEvent(keyCode);
-                        }
-                    }).start();
-
-                }else if(eventType == Constant.SWIPE){
-                    SwipeKeyMappingController controller = new SwipeKeyMappingController(getApplicationContext());
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            controller.executeEvent(keyCode);
-                        }
-                    }).start();
-                }else if (eventType == Constant.DIRECTION_KEY){
-//                    Runnable runnable = new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            DirectionKeyMappingController controller = new DirectionKeyMappingController(getApplicationContext());
-//                            controller.executeEvent(keyCode,event,mFloatingView);
-//                        }
-//                    };
-//                    direction = new Thread(runnable);
-//                    if(!direction.isAlive()){
-//                        direction.start();
-//                    }
-
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            DirectionKeyMappingController controller = new DirectionKeyMappingController(getApplicationContext());
-                            controller.executeEvent(keyCode,event,mFloatingView);
-                        }
-                    }).start();
-
+            public boolean onKey(View view, int i, KeyEvent keyEvent) {
+                int[] pos = getPosition(i);
+                if(pos[0] != -1 && pos[1]!=-1){
+                    EventUtils.tapClick(pos[0],pos[1]);
                 }
-
                 return true;
             }
         });
+    }
 
 
-//        mFloatingView.setOnTouchListener(new View.OnTouchListener() {
-//            @Override
-//            public boolean onTouch(View v, MotionEvent event) {
-//                Intent intent = new Intent(FloatingService.this,MainActivity.class);
-//                startActivity(intent);
-//                return true;
-//            }
-//        });
-
-//        mFloatingView.setOnTouchListener(new View.OnTouchListener() {
-//            private int x;
-//            private int y;
-//            //是否在移动
-//            private boolean isMoving;
-//            @SuppressLint("ClickableViewAccessibility")
-//            @Override
-//            public boolean onTouch(View v, MotionEvent event) {
-//                switch (event.getAction()) {
-//                    case MotionEvent.ACTION_DOWN:
-//                        x = (int) event.getRawX();
-//                        y = (int) event.getRawY();
-//                        isMoving = false;
-//                        return true;
-//                    case MotionEvent.ACTION_MOVE:
-//                        int nowX = (int) event.getRawX();
-//                        int nowY = (int) event.getRawY();
-//                        int moveX = nowX - x;
-//                        int moveY = nowY - y;
-//                        if (Math.abs(moveX) > 0 || Math.abs(moveY) > 0) {
-//                            isMoving = true;
-//                            floatLayoutParams.x += moveX;
-//                            floatLayoutParams.y += moveY;
-//                            //更新View的位置
-//                            mWindowManager.updateViewLayout(mFloatingView, floatLayoutParams);
-//                            x = nowX;
-//                            y = nowY;
-//                            return true;
-//                        }
-//                        break;
-//                    case MotionEvent.ACTION_UP:
-//                        if (!isMoving) {
-////                            onShowSelectDialog();
-//                            return true;
-//                        }
-//                        break;
-//                }
-//                return false;
-//            }
-//        });
+    // 显示按键映射
+    @SuppressLint({"ClickableViewAccessibility", "MissingInflatedId"})
+    public void showKeyMapping(){
+        if(isMainWindow){
+            return;
+        }
+        mainView = LayoutInflater.from(this).inflate(R.layout.key_mapping,null,false);
+        mainParams = createLayoutParams();
+        mainWindow = createWindow(300, 450, mainView, mainParams);
+        dragView(mainView,mainWindow,mainParams,"");
+//        Button key_mapping_click = mainView.findViewById(R.id.key_mapping_tap_click);
+//        key_mapping_save = mainView.findViewById(R.id.key_mapping_save);
+        key_mapping_spinner = mainView.findViewById(R.id.key_mapping_spinner);
+        key_mapping_save = mainView.findViewById(R.id.key_mapping_save);
+        key_mapping_save.setOnClickListener(this);
+        key_mapping_cancel = mainView.findViewById(R.id.key_mapping_cancel);
+        key_mapping_cancel.setOnClickListener(this);
+        key_mapping_tap_click = mainView.findViewById(R.id.key_mapping_tap_click);
+        key_mapping_tap_click.setOnClickListener(this);
+        key_mapping_apply = mainView.findViewById(R.id.key_mapping_apply);
+        key_mapping_apply.setOnClickListener(this);
+        getAllPlan(key_mapping_spinner);
+        isMainWindow = true;
+        if(isApply){
+            key_mapping_apply.setText("取消");
+        }
     }
 
 
 
-//    public static class DirectionController {
-//
-//        ExecutorService executor = Executors.newSingleThreadExecutor();
-//        private static float directX1 = 280f, directY1 = 675f;
-//        private static float swipeLength = 75f;
-//        private static int swipeDuration = 500;
-//        private static int swipeSource = 0xd002;
-//
-//        private int mDirection;  // 0x1111 ADWS
-//        private int mSpeed;
-//        private int mDuration;
-//        private Pointer center,current;
-//
-//        private boolean isMoving;
-//        private static final int DIRECTION_DOWN = 0x1;           // S
-//        private static final int DIRECTION_UP = 0x2;             // W
-//        private static final int DIRECTION_RIGHT = 0x4;          // D
-//        private static final int DIRECTION_LEFT = 0x8;           // A
-//
-//        private static final int DIRECTION_UP_LEFT = DIRECTION_UP | DIRECTION_LEFT;        //WA
-//        private static final int DIRECTION_DOWN_LEFT = DIRECTION_DOWN | DIRECTION_LEFT;      //SA
-//        private static final int DIRECTION_UP_RIGHT = DIRECTION_RIGHT | DIRECTION_UP;       //WD
-//        private static final int DIRECTION_DOWN_RIGHT = DIRECTION_DOWN | DIRECTION_RIGHT;     //SD
-//
-//        private volatile boolean batchDroped;
-//
-//        public static DirectionController getInstance(){
-//            return SingletonHolder.INSTANCE;
-//        }
-//
-//        public synchronized void process(int keyCode, KeyEvent event) {
-////            leftPressed = rightPressed = upPressed = downPressed = false;
-//            int action = event.getAction();
-//            int directBit = -1;
-//            switch (keyCode) {
-//                case KeyEvent.KEYCODE_A:
-//                    directBit = 3;
-//                    break;
-//                case KeyEvent.KEYCODE_D:
-//                    directBit = 2;
-//                    break;
-//                case KeyEvent.KEYCODE_W:
-//                    directBit = 1;
-//                    break;
-//                case KeyEvent.KEYCODE_S:
-//                    directBit = 0;
-//                    break;
-//                default:
-//                    break;
-//            }
-//            int direct = updateDirection(action, directBit);
-//            Log.d(TAG, "process: direct:" + direct);
-//            if(direct == 0) {
-//                batchDroped = true;
-//                EventUtils.injectMotionEvent(swipeSource, MotionEvent.ACTION_UP,
-//                        event.getDownTime(), event.getDownTime(),
-//                        center.x, center.y, 1.0f,
-//                        0);
-//                isMoving = false;
-//                this.mDirection = direct;
-//            } else {
-//                Pointer pointer = computeOffset(direct);
-//                executor.execute(()->processInnerOnce(direct, pointer, event.getDownTime(), false));
-//            }
-//        }
-//
-//        private int updateDirection(int action, int directBit) {
-//            int direction = mDirection;
-//            switch (directBit){
-//                case 0: //S
-//                    direction = action == ACTION_DOWN ? mDirection | (1 << 0) : mDirection & (~(1 << 0));
-//                    int mask = ~(1 << 1);
-//                    direction = action == ACTION_DOWN ? direction & mask : direction;
-//                    break;
-//                case 1: //W
-//                    direction = action == ACTION_DOWN ? mDirection | (1 << 1) : mDirection & (~(1 << 1));
-//                    direction = action == ACTION_DOWN ? direction & (~(1 << 0)): direction;
-//                    break;
-//                case 2: //D
-//                    direction = action == ACTION_DOWN ? mDirection | (1 << 2) : mDirection & (~(1 << 2));
-//                    direction = action == ACTION_DOWN ? direction & (~(1 << 3)) : direction;
-//                    break;
-//                case 3: //A
-//                    direction = action == ACTION_DOWN ? mDirection | (1 << 3) : mDirection & (~(1 << 3));
-//                    direction = action == ACTION_DOWN ? direction & (~(1 << 2)) : direction;
-//                    break;
-//                default:
-//                    break;
-//            }
-//            Log.d(TAG, "updateDirection() returned: " + direction);
-//            return direction;
-//        }
-//
-//        public void setDirection(int direction) {
-//            if (direction == DIRECTION_UP || direction == DIRECTION_DOWN ||
-//                    direction == DIRECTION_LEFT || direction == DIRECTION_RIGHT) {
-//                mDirection = direction;
-//            } else {
-//                throw new IllegalArgumentException("Invalid direction");
-//            }
-//        }
-//
-//        private Pointer computeOffset(int direct) {
-//            float horizental  =  (direct & DIRECTION_RIGHT) != 0 ? swipeLength :
-//                    (direct & DIRECTION_LEFT) != 0 ? - swipeLength : 0;
-//            float vertical  = (direct & DIRECTION_DOWN) != 0 ? swipeLength :
-//                    (direct & DIRECTION_UP) != 0 ? - swipeLength : 0;
-//            return new Pointer(horizental, vertical);
-//        }
-//
-//        private void processInnerOnce(int direct, Pointer pointer, long down, boolean once) {
-//            String format = String.format(" direct:%x, pointer:%s", direct, pointer);
-//            long now = SystemClock.uptimeMillis();
-//            if(mDirection == 0 &&  direct != 0){
-//                batchDroped = false;
-//                EventUtils.injectMotionEvent(swipeSource, MotionEvent.ACTION_DOWN, down, down,
-//                        center.x, center.y, 1.0f,
-//                        0);
-//                isMoving = false;
-//                moveOnce(pointer.x, pointer.y);
-//            } else if ( !isMoving  || mDirection != direct || once ){
-//                moveOnce(pointer.x, pointer.y);
-//            }
-//            this.mDirection = direct;
-//            long duration = SystemClock.uptimeMillis() - now;
-//            Log.d(TAG, "processInnerOnce: duration:" + duration + " move:" + format);
-//
-//        }
-//
-//        private void moveOnce(float horizental, float vertical) {
-//            if(batchDroped) {
-//                return;
-//            }
-//            Log.d(TAG, "moveOnce: horizental:" + horizental + ", vertical:" + vertical + "");
-//            long now = SystemClock.uptimeMillis();
-//            EventUtils.injectMotionEvent(swipeSource, MotionEvent.ACTION_MOVE, now, now,
-//                    center.x + horizental, center.y + vertical, 1.0f,
-//                    0);
-//            isMoving = true;
-//        }
-//
-//        private static class SingletonHolder {
-//            private static final DirectionController INSTANCE = new DirectionController();
-//        }
-//
-//        private DirectionController(){
-//            setCenter(new Pointer(280f, 675f));
-//        }
-//
-//        private void setCenter(Pointer center){
-//            this.center = center;
-//        }
-//
-//        public static class Pointer {
-//            public Pointer(float x, float y) {
-//                this.x = x;
-//                this.y = y;
-//            }
-//            public Pointer(){
-//
-//            }
-//            public float x , y;
-//
-//            @Override
-//            public String toString() {
-//                return "Pointer{" +
-//                        "x=" + x +
-//                        ", y=" + y +
-//                        '}';
-//            }
-//        }
-//
-//    }
 
 
+    // 创建窗口参数
+    public WindowManager.LayoutParams createLayoutParams() {
+        WindowManager.LayoutParams params = new WindowManager.LayoutParams();
+        params.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+                | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                | WindowManager.LayoutParams.FLAG_SCALED
+                | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR
+                | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
 
 
+        if (Build.VERSION.SDK_INT >= 26) {
+            params.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        } else {
+            params.type = WindowManager.LayoutParams.TYPE_SYSTEM_ALERT;
+        }
+        params.format = PixelFormat.TRANSLUCENT;
+        return params;
+    }
+
+    // 创建窗口
+    public WindowManager createWindow(int width, int height, View view, WindowManager.LayoutParams params){
+//        WindowManager windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+        WindowManager windowManager = (WindowManager) this.getSystemService(WINDOW_SERVICE);
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        windowManager.getDefaultDisplay().getMetrics(displayMetrics);
+        params.width = width;
+        params.height = height;
+        params.x = displayMetrics.widthPixels;
+        params.y = displayMetrics.heightPixels;
+        params.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        params.gravity = Gravity.TOP | Gravity.START;
+        windowManager.addView(view,params);
+        return windowManager;
+    }
+
+    public void dragView(View view,WindowManager windowManager,WindowManager.LayoutParams params,String methodName){
+        view.setClickable(true);
+        // 拖拽事件
+        view.setOnTouchListener(new View.OnTouchListener() {
+            private int x;
+            private int y;
+            //是否在移动
+            private boolean isMoving;
+            @SuppressLint("ClickableViewAccessibility")
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        x = (int) event.getRawX();
+                        y = (int) event.getRawY();
+                        isMoving = false;
+                        return true;
+                    case MotionEvent.ACTION_MOVE:
+                        int nowX = (int) event.getRawX();
+                        int nowY = (int) event.getRawY();
+                        int moveX = nowX - x;
+                        int moveY = nowY - y;
+                        if (Math.abs(moveX) > 0 || Math.abs(moveY) > 0) {
+                            isMoving = true;
+                            params.x += moveX;
+                            params.y += moveY;
+                            //更新View的位置
+                            windowManager.updateViewLayout(view, params);
+                            x = nowX;
+                            y = nowY;
+                            return true;
+                        }
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        if (!isMoving) {
+                            if(methodName.equals("showKeyMapping")){
+                                showKeyMapping();
+                            }
+                            return true;
+                        }
+                        break;
+                }
+                return false;
+            }
+        });
+
+    }
+
+    public int[] getPosition(int keycode){
+        int x = -1;
+        int y=-1;
+        if(keyMappingEntities != null && !keyMappingEntities.isEmpty()){
+            Iterator iterator = keyMappingEntities.iterator();
+            while(iterator.hasNext()){
+                KeyMappingEntity keyMapping = (KeyMappingEntity) iterator.next();
+                if(keyMapping.getKeycode() == keycode){
+                    x = keyMapping.getX();
+                    y = keyMapping.getY();
+                }
+            }
+            return new int[]{x,y};
+        }
+        return new int[]{-1,-1};
+    }
+
+
+    public void startModify(String planName){
+        if(!isChange){
+            modifyDialog = new ModifyDialog(getApplication(),planName);
+            modifyDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                @Override
+                public void onDismiss(DialogInterface dialog) {
+                }
+            });
+            modifyDialog.show();
+            mainWindow.removeView(mainView);
+            mainWindow.addView(mainView,mainParams);
+            isChange = true;
+        }
+    }
+
+
+    @SuppressLint("NonConstantResourceId")
+    @Override
+    public void onClick(View view) {
+         switch (view.getId()){
+             case R.id.key_mapping_apply:
+                 if(!isApply && editAndCancal){
+                     startListenerKey();
+                     if(applyDialog != null){
+                         applyDialog.cancal();
+                     }
+                     applyDialog = new ApplyDialog("方案一",this);
+                     keyMappingEntities = applyDialog.apply();
+                     isApply = true;
+                     isMainWindow = false;
+                     key_mapping_apply.setText("取消");
+                     mainWindow.removeView(mainView);
+                 }else{
+                     if(applyDialog!=null) {
+                         endListenerKey();
+                         applyDialog.cancal();
+                         isApply = false;
+                         key_mapping_apply.setText("应用");
+                     }
+                 }
+                 break;
+             case R.id.key_mapping_tap_click:
+                 if(!editAndCancal){
+                     startModify("方案一");
+                     modifyDialog.setEventType(Constant.TAP_CLICK_EVENT); //单击事件
+                 }
+
+                 break;
+             case R.id.key_mapping_save:
+                 if(!editAndCancal) {
+                     modifyDialog.save();
+                     key_mapping_cancel.setText("编辑");
+                     isChange = false;
+                     editAndCancal = true;
+                 }
+                 break;
+             case R.id.key_mapping_cancel:
+                 // 编辑
+                     if(editAndCancal){
+                         applyDialog.cancal();
+                         isApply = false;
+                         editAndCancal = false;
+                         key_mapping_apply.setText("应用");
+                         endListenerKey();
+                         key_mapping_cancel.setText("取消");
+                         startModify("方案一");
+                         modifyDialog.showView(); //单击事件
+                     }else{
+                         editAndCancal = true;
+                         key_mapping_cancel.setText("编辑");
+                         modifyDialog.cancel();
+                         isChange = false;
+                     }
+                     break;
+                 }
+
+         }
+
+
+    public void getAllPlan(Spinner spinner){
+        List<String> items = new ArrayList<>();
+        items.add("选项一");
+        items.add("选项二");
+        items.add("选项三");
+        PlaySpinnerAdapter adapter = new PlaySpinnerAdapter(this, R.layout.key_mapping_spinner_item,R.id.key_mapping_spinner_item_text, items);
+        spinner.setAdapter(adapter);
+    }
 }

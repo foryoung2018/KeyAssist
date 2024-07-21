@@ -12,8 +12,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
 import com.fde.keyassist.R;
-import com.fde.keyassist.activity.AllConfigActivity;
-import com.fde.keyassist.activity.HonorOfKingsActivity;
+
 
 
 public class ConfigManageFragment extends Fragment implements View.OnClickListener{
@@ -38,17 +37,8 @@ public class ConfigManageFragment extends Fragment implements View.OnClickListen
     }
 
 
-
     @Override
     public void onClick(View view) {
-        switch (view.getId()){
-            case R.id.config_manage_all_config:
-                Intent intent = new Intent(view.getContext(), AllConfigActivity.class);
-                startActivity(intent);
-                break;
-            case R.id.config_manage_wz:
-                Intent wz = new Intent(view.getContext(), HonorOfKingsActivity.class);
-                startActivity(wz);
-        }
+
     }
 }
