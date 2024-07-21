@@ -2,6 +2,8 @@ package com.fde.keyassist.dialog;
 
 import static android.content.Context.WINDOW_SERVICE;
 
+import static org.litepal.LitePalApplication.getContext;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.PixelFormat;
@@ -16,6 +18,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.fde.keyassist.R;
+import com.fde.keyassist.entity.DirectMappingEntity;
 import com.fde.keyassist.entity.KeyMappingEntity;
 import com.fde.keyassist.util.Constant;
 
@@ -74,8 +77,36 @@ public class ApplyDialog {
         params.height = 70;
         return params;
     }
+
     @SuppressLint("MissingInflatedId")
-    public List<KeyMappingEntity> apply(){
+    public List<DirectMappingEntity> applyDirect(){
+        params.width = 80;
+        params.height = 100;
+        List<DirectMappingEntity> directMappingEntities = LitePal.where("planName = ?", planName).find(DirectMappingEntity.class);
+        for (DirectMappingEntity entity : directMappingEntities){
+            View view = LayoutInflater.from(context).inflate(R.layout.modify_dialog_direct_click, null, false);
+            TextView up = view.findViewById(R.id.modify_dialog_direct_click_up);
+            up.setText(entity.getUpKeyValue());
+            TextView down = view.findViewById(R.id.modify_dialog_direct_click_down);
+            down.setText(entity.getDownKeyValue());
+            TextView left = view.findViewById(R.id.modify_dialog_direct_click_left);
+            left.setText(entity.getLeftKeyValue());
+            TextView right = view.findViewById(R.id.modify_dialog_direct_click_right);
+            right.setText(entity.getRightKeyValue());
+            ImageView delete = view.findViewById(R.id.modify_dialog_tap_click_delete);
+            delete.setVisibility(View.GONE);
+            TextView hint = view.findViewById(R.id.modify_dialog_direct_click_hint);
+            hint.setVisibility(View.GONE);
+            params.x = entity.getX() - params.width/2;
+            params.y = entity.getY() - params.height/2;
+            windowManager.addView(view,params);
+            allView.add(view);
+        }
+        return directMappingEntities;
+    }
+
+
+    public List<KeyMappingEntity> applyTapClick(){
         cancal();
         List<KeyMappingEntity> curKeyMappingEntity = LitePal.where("planName = ?", planName).find(KeyMappingEntity.class);
         for (KeyMappingEntity entity : curKeyMappingEntity){
@@ -94,6 +125,12 @@ public class ApplyDialog {
         }
         return curKeyMappingEntity;
     }
+
+//    @SuppressLint("MissingInflatedId")
+//    public List<KeyMappingEntity> apply(){
+//        applyTapClick();
+//        applyDirect();
+//    }
 
     public void cancal(){
         if(windowManager!=null && allView!=null && !allView.isEmpty()){

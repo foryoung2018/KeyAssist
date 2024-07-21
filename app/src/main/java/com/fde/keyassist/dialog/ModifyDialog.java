@@ -6,6 +6,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.PixelFormat;
 import android.os.Build;
+import android.os.SystemClock;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -19,6 +20,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 
 import com.fde.keyassist.R;
+import com.fde.keyassist.entity.DirectMappingEntity;
 import com.fde.keyassist.entity.KeyMappingEntity;
 import com.fde.keyassist.util.Constant;
 
@@ -40,7 +42,7 @@ public class ModifyDialog extends BaseServiceDialog implements View.OnClickListe
     private Integer eventType = Constant.TAP_CLICK_EVENT;
 
     private TextView curText;
-    private TextView curHintText;
+//    private TextView curHintText;
 
     private View curView;
 
@@ -49,6 +51,7 @@ public class ModifyDialog extends BaseServiceDialog implements View.OnClickListe
 
     private List<View> tapView = new ArrayList<>();
     private List<View> allView = new ArrayList<>();
+    private List<View> directView = new ArrayList<>();
 
     private WindowManager windowManager;
 
@@ -90,21 +93,48 @@ public class ModifyDialog extends BaseServiceDialog implements View.OnClickListe
     public boolean onTouchEvent(@NonNull MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_UP) {
             if(eventType == Constant.TAP_CLICK_EVENT){
-                View view = LayoutInflater.from(getContext()).inflate(R.layout.modify_dialog_tap_click,null,false);
-                curText = view.findViewById(R.id.modify_dialog_tap_click_edit);
-                curHintText = view.findViewById(R.id.modify_dialog_tap_click_hint);
-                layoutParams.x = (int)event.getRawX() - layoutParams.width/2;
-                layoutParams.y = (int)event.getRawY() - layoutParams.height/2;
-                windowManager.addView(view,layoutParams);
-                curView = view;
-                tapView.add(view);
-                allView.add(view);
-                dragView(view,"");
+                createTapClick(event);
+            }else if(eventType == Constant.DIRECTION_KEY){
+                createDirectClick(event);
             }
 
         }
         return super.onTouchEvent(event);
     }
+
+
+    public void createTapClick(MotionEvent event){
+        // 点击事件
+        View view = LayoutInflater.from(getContext()).inflate(R.layout.modify_dialog_tap_click,null,false);
+//                curText = view.findViewById(R.id.modify_dialog_tap_click_edit);
+//                curHintText = view.findViewById(R.id.modify_dialog_tap_click_hint);
+        layoutParams.width = 70;
+        layoutParams.height = 70;
+        layoutParams.x = (int)event.getRawX() - layoutParams.width/2;
+        layoutParams.y = (int)event.getRawY() - layoutParams.height/2;
+        windowManager.addView(view,layoutParams);
+        curText = view.findViewById(R.id.modify_dialog_tap_click_edit);
+        curView = view;
+        tapView.add(view);
+        allView.add(view);
+        dragView(view,"");
+    }
+
+    public void createDirectClick(MotionEvent event){
+        // 方向键
+        View view = LayoutInflater.from(getContext()).inflate(R.layout.modify_dialog_direct_click,null,false);
+        layoutParams.width = 80;
+        layoutParams.height = 100;
+        layoutParams.x = (int)event.getRawX() - layoutParams.width/2;
+        layoutParams.y = (int)event.getRawY() - layoutParams.height/2;
+        windowManager.addView(view,layoutParams);
+        curText = view.findViewById(R.id.modify_dialog_direct_click_up);
+        curView = view;
+        directView.add(view);
+        allView.add(view);
+        dragView(view,"");
+    }
+
 
     @SuppressLint("SetTextI18n")
     @Override
@@ -112,25 +142,31 @@ public class ModifyDialog extends BaseServiceDialog implements View.OnClickListe
         int metaState = event.getMetaState();
         boolean ctrlPressed = (metaState & KeyEvent.META_CTRL_ON) != 0;
         boolean altPressed = (metaState & KeyEvent.META_ALT_ON) != 0;
-
+//        curText = curView.findViewById(R.id.modify_dialog_tap_click_edit);
         if(curText != null){
             if(event.getDisplayLabel() != 0 && ctrlPressed){
                 curText.setText("CTRL+" + event.getDisplayLabel() );
                 curText.setTextSize(8);
-                curHintText.setVisibility(View.GONE);
             }
             else if(event.getDisplayLabel() != 0 && altPressed){
                 curText.setText("ALT+"+event.getDisplayLabel());
                 curText.setTextSize(10);
-                curHintText.setVisibility(View.GONE);
-                curHintText.setVisibility(View.GONE);
             }
             else if(event.getDisplayLabel() != 0){
                 curText.setText(String.valueOf(event.getDisplayLabel()));
-                curHintText.setVisibility(View.GONE);
-                curHintText.setVisibility(View.GONE);
             }
         }
+        if(eventType == Constant.TAP_CLICK_EVENT){
+            if(curText !=null &&!curText.getText().toString().equals("")){
+                if(curView != null){
+                    TextView curHintText = curView.findViewById(R.id.modify_dialog_tap_click_hint);
+                    curHintText.setVisibility(View.GONE);
+                }
+
+            }
+
+        }
+
 
         return super.onKeyUp(keyCode, event);
     }
@@ -178,17 +214,13 @@ public class ModifyDialog extends BaseServiceDialog implements View.OnClickListe
         return windowManager;
     }
 
+
+    @SuppressLint("ClickableViewAccessibility")
     public void dragView(View view,String methodName){
-        ImageView imageView = view.findViewById(R.id.modify_dialog_tap_click_delete);
-        imageView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                windowManager.removeView(view);
-                if(eventType == Constant.TAP_CLICK_EVENT){
-                    tapView.remove(view);
-                }
-            }
-        });
+            createTextListener(view,eventType);
+
+        // 单击事件
+
 
         view.setClickable(true);
         view.setOnTouchListener(new View.OnTouchListener() {
@@ -224,9 +256,10 @@ public class ModifyDialog extends BaseServiceDialog implements View.OnClickListe
                         break;
                     case MotionEvent.ACTION_UP:
                         if (!isMoving) {
-                            curText = view.findViewById(R.id.modify_dialog_tap_click_edit);
-                            curHintText = view.findViewById(R.id.modify_dialog_tap_click_hint);
+//                            curText = view.findViewById(R.id.modify_dialog_tap_click_edit);
+//                            curHintText = view.findViewById(R.id.modify_dialog_tap_click_hint);
                             curView = view;
+
                             return true;
                         }
                         break;
@@ -248,6 +281,23 @@ public class ModifyDialog extends BaseServiceDialog implements View.OnClickListe
     // 保存
     public void save(){
         LitePal.deleteAll(KeyMappingEntity.class, "planName = ?" , planName);
+        LitePal.deleteAll(DirectMappingEntity.class, "planName = ?" , planName);
+        // 保存单个按键
+        saveTapEvent();
+        // 保存方向键
+        saveDirectEvent();
+        if(allView != null && !allView.isEmpty()){
+            for (View view : allView){
+                windowManager.removeView(view);
+            }
+        }
+        allView.clear();
+        tapView.clear();
+        directView.clear();
+        dismiss();
+    }
+
+    public void saveTapEvent(){
         // 单机事件view
         for (View view : tapView){
             // 清空已有的保存
@@ -269,32 +319,115 @@ public class ModifyDialog extends BaseServiceDialog implements View.OnClickListe
                 keyMapping.setCombinationKeyCode(0);
             }
             keyMapping.save();
-            windowManager.removeView(view);
         }
-        allView.clear();
-        tapView.clear();
-        dismiss();
+    }
+    // 保存方向键
+    public void saveDirectEvent(){
+         for(View view : directView){
+             DirectMappingEntity directMappingEntity = new DirectMappingEntity();
+             int[] centerPostion = getCenterPostion(view);
+             directMappingEntity.setX(centerPostion[0]);
+             directMappingEntity.setY(centerPostion[1]);
+             // 上键
+             TextView up = view.findViewById(R.id.modify_dialog_direct_click_up);
+             String upKeyValue = up.getText().toString();
+             directMappingEntity.setUpKeyValue(upKeyValue);
+             if(upKeyValue.length() == 1){
+                 int keycode = KeyEvent.keyCodeFromString(upKeyValue);
+                 directMappingEntity.setUpKeycode(keycode);
+                 directMappingEntity.setUpCombination(false);
+                 directMappingEntity.setUpCombinationKeyCode(0);
+             }
+             // 下键
+             TextView down = view.findViewById(R.id.modify_dialog_direct_click_down);
+             String downKeyValue = down.getText().toString();
+             directMappingEntity.setDownKeyValue(downKeyValue);
+             if(downKeyValue.length() == 1){
+                 int keycode = KeyEvent.keyCodeFromString(downKeyValue);
+                 directMappingEntity.setDownKeycode(keycode);
+                 directMappingEntity.setDownCombination(false);
+                 directMappingEntity.setDownCombinationKeyCode(0);
+             }
+             // 左键
+             TextView left = view.findViewById(R.id.modify_dialog_direct_click_left);
+             String leftKeyValue = left.getText().toString();
+             directMappingEntity.setLeftKeyValue(leftKeyValue);
+             if(leftKeyValue.length() == 1){
+                 int keycode = KeyEvent.keyCodeFromString(leftKeyValue);
+                 directMappingEntity.setLeftKeycode(keycode);
+                 directMappingEntity.setLeftCombination(false);
+                 directMappingEntity.setLeftCombinationKeyCode(0);
+             }
+             // 右键
+             TextView right = view.findViewById(R.id.modify_dialog_direct_click_right);
+             String rightKeyValue = right.getText().toString();
+             directMappingEntity.setRightKeyValue(rightKeyValue);
+             if(rightKeyValue.length() == 1){
+                 int keycode = KeyEvent.keyCodeFromString(rightKeyValue);
+                 directMappingEntity.setRightKeycode(keycode);
+                 directMappingEntity.setRightCombination(false);
+                 directMappingEntity.setRightCombinationKeyCode(0);
+             }
+
+             directMappingEntity.setEventType(Constant.DIRECTION_KEY);
+             directMappingEntity.setPlanName(planName);
+             directMappingEntity.save();
+         }
     }
 
-    // 从数据库取出所有事件
-    public void showView(){
+
+
+
+    public void showTapEvent(){
         List<KeyMappingEntity> curKeyMappingEntity = LitePal.where("planName = ?", planName).find(KeyMappingEntity.class);
         for (KeyMappingEntity entity : curKeyMappingEntity){
-            if(entity.getEventType() == Constant.TAP_CLICK_EVENT) {
-                View view = LayoutInflater.from(getContext()).inflate(R.layout.modify_dialog_tap_click, null, false);
-                TextView modify_dialog_tap_click_edit = view.findViewById(R.id.modify_dialog_tap_click_edit);
-                modify_dialog_tap_click_edit.setText(entity.getKeyValue());
-                tapView.add(view);
-                allView.add(view);
-                dragView(view,"");
-                layoutParams.x = entity.getX() - layoutParams.width/2;
-                layoutParams.y = entity.getY() - layoutParams.height/2;
-                windowManager.addView(view,layoutParams);
-            }
-
+            View view = LayoutInflater.from(getContext()).inflate(R.layout.modify_dialog_tap_click, null, false);
+            TextView modify_dialog_tap_click_edit = view.findViewById(R.id.modify_dialog_tap_click_edit);
+            modify_dialog_tap_click_edit.setText(entity.getKeyValue());
+            tapView.add(view);
+            allView.add(view);
+            dragView(view,"");
+            layoutParams.x = entity.getX() - layoutParams.width/2;
+            layoutParams.y = entity.getY() - layoutParams.height/2;
+            windowManager.addView(view,layoutParams);
+            createTextListener(view,entity.getEventType());
         }
 
     }
+
+    public void showDirectEvent(){
+        layoutParams.width = 80;
+        layoutParams.height = 100;
+        List<DirectMappingEntity> directMappingEntities = LitePal.where("planName = ?", planName).find(DirectMappingEntity.class);
+        for (DirectMappingEntity entity : directMappingEntities){
+            View view = LayoutInflater.from(getContext()).inflate(R.layout.modify_dialog_direct_click, null, false);
+            TextView up = view.findViewById(R.id.modify_dialog_direct_click_up);
+            up.setText(entity.getUpKeyValue());
+            TextView down = view.findViewById(R.id.modify_dialog_direct_click_down);
+            down.setText(entity.getDownKeyValue());
+            TextView left = view.findViewById(R.id.modify_dialog_direct_click_left);
+            left.setText(entity.getLeftKeyValue());
+            TextView right = view.findViewById(R.id.modify_dialog_direct_click_right);
+            right.setText(entity.getRightKeyValue());
+            directView.add(view);
+            allView.add(view);
+            dragView(view,"");
+            layoutParams.x = entity.getX() - layoutParams.width/2;
+            layoutParams.y = entity.getY() - layoutParams.height/2;
+            windowManager.addView(view,layoutParams);
+            createTextListener(view,entity.getEventType());
+        }
+
+    }
+    // 从数据库取出所有事件
+    public void showView(){
+        showTapEvent();
+        showDirectEvent();
+    }
+
+
+
+
 
     public void cancel(){
         if(windowManager !=null && allView != null && !allView.isEmpty()){
@@ -304,6 +437,101 @@ public class ModifyDialog extends BaseServiceDialog implements View.OnClickListe
             allView.clear();
             tapView.clear();
             dismiss();
+        }
+
+
+    }
+
+
+    @SuppressLint("ClickableViewAccessibility")
+    public void createTextListener(View view,Integer evn){
+        if(view == null) return;
+        if(evn == Constant.TAP_CLICK_EVENT){
+                TextView textView = view.findViewById(R.id.modify_dialog_tap_click_edit);
+                if(textView != null){
+                    textView.setOnTouchListener(new View.OnTouchListener() {
+                        @Override
+                        public boolean onTouch(View view, MotionEvent motionEvent) {
+                            curText = textView;
+                            eventType = evn;
+                            return false;
+                        }
+                    });
+                }
+            ImageView imageView = view.findViewById(R.id.modify_dialog_tap_click_delete);
+            imageView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    windowManager.removeView(view);
+                    tapView.remove(view);
+                    allView.remove(view);
+                }
+            });
+
+
+        }
+
+        if(evn == Constant.DIRECTION_KEY){
+
+            ImageView imageView = view.findViewById(R.id.modify_dialog_tap_click_delete);
+            imageView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    windowManager.removeView(view);
+                    directView.remove(view);
+                    allView.remove(view);
+                }
+            });
+
+            TextView up = view.findViewById(R.id.modify_dialog_direct_click_up);
+            if(up != null){
+                up.setOnTouchListener(new View.OnTouchListener() {
+                    @Override
+                    public boolean onTouch(View view, MotionEvent motionEvent) {
+                        curText = up;
+                        eventType = evn;
+                        return false;
+                    }
+                });
+            }
+
+            TextView down = view.findViewById(R.id.modify_dialog_direct_click_down);
+            if(down != null){
+                down.setOnTouchListener(new View.OnTouchListener() {
+                    @Override
+                    public boolean onTouch(View view, MotionEvent motionEvent) {
+                        curText = down;
+                        eventType = evn;
+                        return false;
+                    }
+                });
+            }
+
+
+            TextView left = view.findViewById(R.id.modify_dialog_direct_click_left);
+            if(left != null){
+                left.setOnTouchListener(new View.OnTouchListener() {
+                    @Override
+                    public boolean onTouch(View view, MotionEvent motionEvent) {
+                        curText = left;
+                        eventType = evn;
+                        return false;
+                    }
+                });
+            }
+
+            TextView right = view.findViewById(R.id.modify_dialog_direct_click_right);
+            if(right != null){
+                right.setOnTouchListener(new View.OnTouchListener() {
+                    @Override
+                    public boolean onTouch(View view, MotionEvent motionEvent) {
+                        curText = right;
+                        eventType = evn;
+                        return false;
+                    }
+                });
+            }
+
         }
 
 

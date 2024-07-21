@@ -97,6 +97,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent">
             <ImageView
+                android:id="@+id/key_mapping_direct_click"
                 android:layout_gravity="center"
                 android:background="@drawable/key_mapping_key_background"
                 android:src="@drawable/key_mapping_cross_key"
@@ -476,7 +477,7 @@
             android:layout_marginLeft="10dp"
             android:background="@drawable/key_mapping_cancel"
             android:layout_weight="1"
-            android:text="保存"
+            android:text="退出"
             android:layout_width="0dp"
             android:layout_height="30dp"/>
     </LinearLayout>

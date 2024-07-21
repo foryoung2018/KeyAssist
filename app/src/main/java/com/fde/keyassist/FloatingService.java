@@ -2,10 +2,13 @@ package com.fde.keyassist;
 
 
 
+import static com.fde.keyassist.event.EventUtils.diretClick;
+
 import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.IBinder;
@@ -25,9 +28,12 @@ import androidx.annotation.Nullable;
 import com.fde.keyassist.adapter.PlaySpinnerAdapter;
 import com.fde.keyassist.dialog.ApplyDialog;
 import com.fde.keyassist.dialog.ModifyDialog;
+import com.fde.keyassist.entity.DirectMappingEntity;
 import com.fde.keyassist.entity.KeyMappingEntity;
 import com.fde.keyassist.event.EventUtils;
 import com.fde.keyassist.util.Constant;
+
+import org.litepal.LitePal;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -55,11 +61,19 @@ public class FloatingService extends Service implements View.OnClickListener{
 
     private List<KeyMappingEntity> keyMappingEntities;
 
+    private Integer eventType;
+
+    private List<DirectMappingEntity> directMappingEntities;
+
     private View floatView;
 
     private WindowManager.LayoutParams floatParams;
 
     private WindowManager floatWindow;
+
+    private Boolean saveAndExit = false; // 保存和退出
+
+    private ImageView key_mapping_direct_click;
 
     @Nullable
     @Override
@@ -72,6 +86,7 @@ public class FloatingService extends Service implements View.OnClickListener{
     @Override
     public void onCreate() {
         super.onCreate();
+        SQLiteDatabase db = LitePal.getDatabase();
         showFloatView();
         applyDialog = new ApplyDialog("方案一",this);
     }
@@ -117,8 +132,15 @@ public class FloatingService extends Service implements View.OnClickListener{
             @Override
             public boolean onKey(View view, int i, KeyEvent keyEvent) {
                 int[] pos = getPosition(i);
-                if(pos[0] != -1 && pos[1]!=-1){
-                    EventUtils.tapClick(pos[0],pos[1]);
+                if(pos[0] != -1 && pos[1]!=-1) {
+                    if (eventType == Constant.TAP_CLICK_EVENT) {
+                        EventUtils.tapClick(pos[0], pos[1]);
+                    } else if (eventType == Constant.DIRECTION_KEY_UP
+                            || eventType == Constant.DIRECTION_KEY_LEFT
+                            || eventType == Constant.DIRECTION_KEY_DOWN
+                            || eventType == Constant.DIRECTION_KEY_RIGHT) {
+                        EventUtils.diretClick(floatView,keyEvent, pos[0], pos[1], eventType);
+                    }
                 }
                 return true;
             }
@@ -147,6 +169,8 @@ public class FloatingService extends Service implements View.OnClickListener{
         key_mapping_tap_click.setOnClickListener(this);
         key_mapping_apply = mainView.findViewById(R.id.key_mapping_apply);
         key_mapping_apply.setOnClickListener(this);
+        key_mapping_direct_click = mainView.findViewById(R.id.key_mapping_direct_click);
+        key_mapping_direct_click.setOnClickListener(this);
         getAllPlan(key_mapping_spinner);
         isMainWindow = true;
         if(isApply){
@@ -244,18 +268,50 @@ public class FloatingService extends Service implements View.OnClickListener{
 
     public int[] getPosition(int keycode){
         int x = -1;
-        int y=-1;
+        int y = -1;
         if(keyMappingEntities != null && !keyMappingEntities.isEmpty()){
             Iterator iterator = keyMappingEntities.iterator();
             while(iterator.hasNext()){
                 KeyMappingEntity keyMapping = (KeyMappingEntity) iterator.next();
-                if(keyMapping.getKeycode() == keycode){
+                if(keyMapping.getKeycode() != null && keyMapping.getKeycode() == keycode){
                     x = keyMapping.getX();
                     y = keyMapping.getY();
+                    eventType = Constant.TAP_CLICK_EVENT;
+                    return new int[]{x,y};
                 }
             }
-            return new int[]{x,y};
+
         }
+
+        if(directMappingEntities != null && !directMappingEntities.isEmpty()){
+            Iterator iterator = directMappingEntities.iterator();
+            while(iterator.hasNext()){
+                DirectMappingEntity directMapping = (DirectMappingEntity) iterator.next();
+                if(directMapping.getUpKeycode() != null && directMapping.getUpKeycode() == keycode){
+                    x = directMapping.getX();
+                    y = directMapping.getY();
+                    eventType = Constant.DIRECTION_KEY_UP;
+                    return new int[]{x,y};
+                }else if(directMapping.getDownKeycode() != null &&directMapping.getDownKeycode() == keycode){
+                    x = directMapping.getX();
+                    y = directMapping.getY();
+                    eventType = Constant.DIRECTION_KEY_DOWN;
+                    return new int[]{x,y};
+                }else if(directMapping.getLeftKeycode() != null && directMapping.getLeftKeycode() == keycode){
+                    x = directMapping.getX();
+                    y = directMapping.getY();
+                    eventType = Constant.DIRECTION_KEY_LEFT;
+                    return new int[]{x,y};
+                }else if(directMapping.getRightKeycode() != null && directMapping.getRightKeycode() == keycode){
+                    x = directMapping.getX();
+                    y = directMapping.getY();
+                    eventType = Constant.DIRECTION_KEY_RIGHT;
+                    return new int[]{x,y};
+                }
+            }
+
+        }
+
         return new int[]{-1,-1};
     }
 
@@ -280,6 +336,19 @@ public class FloatingService extends Service implements View.OnClickListener{
     @Override
     public void onClick(View view) {
          switch (view.getId()){
+
+             case R.id.key_mapping_tap_click:
+                 if(!editAndCancal){
+//                     startModify("方案一");
+                     modifyDialog.setEventType(Constant.TAP_CLICK_EVENT); //单击事件
+                 }
+                 break;
+             case R.id.key_mapping_direct_click:
+                 if(!editAndCancal){
+//                     startModify("方案一");
+                     modifyDialog.setEventType(Constant.DIRECTION_KEY); //单击事件
+                 }
+                 break;
              case R.id.key_mapping_apply:
                  if(!isApply && editAndCancal){
                      startListenerKey();
@@ -287,7 +356,8 @@ public class FloatingService extends Service implements View.OnClickListener{
                          applyDialog.cancal();
                      }
                      applyDialog = new ApplyDialog("方案一",this);
-                     keyMappingEntities = applyDialog.apply();
+                     keyMappingEntities = applyDialog.applyTapClick();
+                     directMappingEntities = applyDialog.applyDirect();
                      isApply = true;
                      isMainWindow = false;
                      key_mapping_apply.setText("取消");
@@ -301,24 +371,26 @@ public class FloatingService extends Service implements View.OnClickListener{
                      }
                  }
                  break;
-             case R.id.key_mapping_tap_click:
-                 if(!editAndCancal){
-                     startModify("方案一");
-                     modifyDialog.setEventType(Constant.TAP_CLICK_EVENT); //单击事件
-                 }
-
-                 break;
              case R.id.key_mapping_save:
                  if(!editAndCancal) {
                      modifyDialog.save();
                      key_mapping_cancel.setText("编辑");
                      isChange = false;
                      editAndCancal = true;
+                     key_mapping_save.setText("退出");
+                 }else{
+                     endListenerKey();
+                     applyDialog.cancal();
+                     isApply = false;
+                     key_mapping_apply.setText("应用");
+                     isMainWindow = false;
+                     mainWindow.removeView(mainView);
                  }
                  break;
              case R.id.key_mapping_cancel:
                  // 编辑
                      if(editAndCancal){
+                         key_mapping_save.setText("保存");
                          applyDialog.cancal();
                          isApply = false;
                          editAndCancal = false;
@@ -328,6 +400,7 @@ public class FloatingService extends Service implements View.OnClickListener{
                          startModify("方案一");
                          modifyDialog.showView(); //单击事件
                      }else{
+                         key_mapping_save.setText("退出");
                          editAndCancal = true;
                          key_mapping_cancel.setText("编辑");
                          modifyDialog.cancel();
