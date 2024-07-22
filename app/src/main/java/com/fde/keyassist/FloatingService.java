@@ -5,6 +5,7 @@ package com.fde.keyassist;
 import static com.fde.keyassist.event.EventUtils.diretClick;
 
 import android.annotation.SuppressLint;
+import android.app.Instrumentation;
 import android.app.Service;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -75,12 +76,14 @@ public class FloatingService extends Service implements View.OnClickListener{
 
     private ImageView key_mapping_direct_click;
 
+
+
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return null;
     }
-
 
 
     @Override
@@ -89,6 +92,7 @@ public class FloatingService extends Service implements View.OnClickListener{
         SQLiteDatabase db = LitePal.getDatabase();
         showFloatView();
         applyDialog = new ApplyDialog("方案一",this);
+
     }
 
 

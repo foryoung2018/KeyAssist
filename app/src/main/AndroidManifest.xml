@@ -22,16 +22,6 @@
         android:theme="@style/Theme.KeyAssist"
         tools:targetApi="31">
         <activity
-            android:name=".activity.HonorOfKingsActivity"
-            android:exported="true"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.KeyAssist"></activity>
-        <activity
-            android:name=".activity.AllConfigActivity"
-            android:exported="true"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.KeyAssist"></activity>
-        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"

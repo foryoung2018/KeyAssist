@@ -30,11 +30,14 @@ public class MainActivity extends Activity{
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.layout_main);
+//        setContentView(R.layout.layout_main);
         init();
         Intent intent = new Intent(MainActivity.this,FloatingService.class);
         startService(intent);
         moveTaskToBack(true);
+
     }
+
+
 
 }

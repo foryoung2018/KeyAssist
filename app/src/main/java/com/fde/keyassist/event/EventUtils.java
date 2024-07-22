@@ -4,7 +4,10 @@ import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Display.INVALID_DISPLAY;
 import static android.view.KeyEvent.ACTION_DOWN;
 
+
+import android.app.Instrumentation;
 import android.app.Service;
+import android.app.UiAutomation;
 import android.content.Context;
 import android.os.SystemClock;
 import android.util.Log;
@@ -13,6 +16,9 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 
+
+
+import com.fde.keyassist.R;
 import com.fde.keyassist.util.Constant;
 import com.genymobile.scrcpy.Device;
 
@@ -21,8 +27,9 @@ import java.util.concurrent.Executors;
 
 public class EventUtils {
 
+
     public static void injectMotionEvent(int inputSource, int action, long downTime, long when,
-                                           float x, float y, float pressure, int displayId) {
+                                         float x, float y, float pressure, int displayId) {
         final float DEFAULT_SIZE = 1.0f;
         final int DEFAULT_META_STATE = 0;
         final float DEFAULT_PRECISION_X = 1.0f;
@@ -51,6 +58,14 @@ public class EventUtils {
                 injectMotionEvent(InputDevice.SOURCE_TOUCHSCREEN, MotionEvent.ACTION_UP, now, now, x, y, 0.0f, 0);
             }
         }).start();
+
+
+        // 发送按下事件
+        // 获取屏幕的中心坐标
+        // 创建并发送MotionEvent
+
+
+
 
     }
 
